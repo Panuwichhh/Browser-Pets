@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Browser Pets</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 300px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 13px;
+      color: #1a1a1a;
+      background: #fff;
+    }
+
+    .header {
+      background: #6c5ce7;
+      color: white;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-title {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .header-sub {
+      font-size: 11px;
+      opacity: 0.8;
+    }
+
+    .toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: white;
+    }
+
+    .toggle {
+      position: relative;
+      width: 34px;
+      height: 18px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 9px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+
+    .toggle.on {
+      background: rgba(255, 255, 255, 0.85);
+    }
+
+    .toggle-thumb {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: white;
+      transition: transform .2s;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .toggle.on .toggle-thumb {
+      transform: translateX(16px);
+      background: #6c5ce7;
+    }
+
+    .section {
+      padding: 14px 16px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .section:last-child {
+      border-bottom: none;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 10px;
+    }
+
+    .pet-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+
+    .pet-btn {
+      background: #f8f8f8;
+      border: 2px solid transparent;
+      border-radius: 10px;
+      padding: 8px 4px;
+      cursor: pointer;
+      text-align: center;
+      transition: all .15s;
+    }
+
+    .pet-btn:hover {
+      background: #f0eeff;
+    }
+
+    .pet-btn.active {
+      border-color: #6c5ce7;
+      background: #f0eeff;
+    }
+
+    .pet-emoji {
+      font-size: 22px;
+      display: block;
+    }
+
+    .pet-label {
+      font-size: 10px;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    .form-group {
+      margin-bottom: 10px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: #555;
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+
+    select,
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #1a1a1a;
+      background: #fafafa;
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    select:focus,
+    input:focus {
+      border-color: #6c5ce7;
+      background: #fff;
+    }
+
+    .api-hint {
+      font-size: 11px;
+      color: #999;
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    .api-hint a {
+      color: #6c5ce7;
+      text-decoration: none;
+    }
+
+    .key-wrap {
+      position: relative;
+    }
+
+    .key-wrap input {
+      padding-right: 36px;
+    }
+
+    .eye-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      color: #999;
+      padding: 2px;
+    }
+
+    .model-presets {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .preset-btn {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1.5px solid #e0e0e0;
+      background: transparent;
+      cursor: pointer;
+      color: #555;
+      transition: all .15s;
+    }
+
+    .preset-btn:hover {
+      border-color: #6c5ce7;
+      color: #6c5ce7;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 8px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all .15s;
+    }
+
+    .btn-primary {
+      background: #6c5ce7;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5a4fd6;
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #555;
+    }
+
+    .btn-secondary:hover {
+      background: #e4e4e4;
+    }
+
+    .save-status {
+      text-align: center;
+      font-size: 12px;
+      color: #27ae60;
+      margin-top: 8px;
+      opacity: 0;
+      transition: opacity .3s;
+      height: 18px;
+    }
+
+    .save-status.show {
+      opacity: 1;
+    }
+
+    .reload-note {
+      background: #fffbe6;
+      padding: 7px 16px;
+      font-size: 11px;
+      color: #856404;
+      border-top: 1px solid #f0e68c;
+    }
+
+    .status-bar {
+      background: #f8f8f8;
+      padding: 8px 16px;
+      font-size: 11px;
+      color: #888;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #ccc;
+    }
+
+    .status-dot.ok {
+      background: #27ae60;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header">
+    <div class="header-left">
+      <span style="font-size:22px">🐾</span>
+      <div>
+        <div class="header-title">Browser Pets</div>
+        <div class="header-sub">AI เดินเล่นใน browser</div>
+      </div>
+    </div>
+    <div class="toggle-wrap">
+      <span id="toggle-label">เปิด</span>
+      <div class="toggle on" id="toggle">
+        <div class="toggle-thumb"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">เลือกสัตว์เลี้ยง</div>
+    <div class="pet-grid">
+      <div class="pet-btn active" data-pet="cat"><span class="pet-emoji">🐱</span>
+        <div class="pet-label">Neko</div>
+      </div>
+      <div class="pet-btn" data-pet="dog"><span class="pet-emoji">🐶</span>
+        <div class="pet-label">Buddy</div>
+      </div>
+      <div class="pet-btn" data-pet="frog"><span class="pet-emoji">🐸</span>
+        <div class="pet-label">Froggy</div>
+      </div>
+      <div class="pet-btn" data-pet="fox"><span class="pet-emoji">🦊</span>
+        <div class="pet-label">Kitsune</div>
+      </div>
+      <div class="pet-btn" data-pet="penguin"><span class="pet-emoji">🐧</span>
+        <div class="pet-label">Tux</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">ตั้งค่า AI</div>
+    <div class="form-group">
+      <label>Provider</label>
+      <select id="provider">
+        <option value="claude">Claude (Anthropic)</option>
+        <option value="openai">ChatGPT (OpenAI)</option>
+        <option value="gemini">Gemini (Google)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Model</label>
+      <input type="text" id="model" placeholder="เว้นว่างเพื่อใช้ค่า default">
+      <div class="model-presets" id="model-presets"></div>
+    </div>
+    <div class="form-group">
+      <label>API Key</label>
+      <div class="key-wrap">
+        <input type="password" id="api-key" placeholder="วาง API key ที่นี่">
+        <button class="eye-btn" id="eye-btn" title="แสดง/ซ่อน">👁</button>
+      </div>
+      <div class="api-hint" id="api-hint">
+        รับ key ได้ที่ <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-save">บันทึก</button>
+      <button class="btn btn-secondary" id="btn-test">ทดสอบ</button>
+    </div>
+    <div class="save-status" id="save-status">✓ บันทึกแล้ว!</div>
+  </div>
+
+  <div class="reload-note">💡 ถ้าไม่เห็นสัตว์เลี้ยง ให้กด F5 reload หน้าที่ต้องการ</div>
+  <div class="status-bar">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-text">ยังไม่มี API key — สัตว์เดินได้แล้ว แต่คุยยังไม่ได้</span>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+
+</html>
