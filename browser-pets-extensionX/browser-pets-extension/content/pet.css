@@ -8,11 +8,12 @@
   z-index: 2147483647 !important;
   font-family: -apple-system, sans-serif !important;
   background: transparent !important;
-  overflow: hidden !important;
+  overflow: visible !important;
 }
 
 .bp-pet {
   position: absolute !important;
+  top: auto !important;
   pointer-events: all !important;
   cursor: grab !important;
   user-select: none !important;

@@ -45,6 +45,7 @@
   ];
 
   let petId = "cat", enabled = true, apiKey = "", provider = "claude", model = "";
+  let ytRemoteTabId = null;
   // Walk/idle tuning — reduce walking dramatically to keep pet mostly still
   const WALK_SPEED = 0.01;                 // very slow horizontal speed
   const WALK_IDLE_PROBABILITY = 0.08;      // chance per tick to go idle (higher = more idle)
@@ -54,7 +55,7 @@
   const LAND_WALK_SPEED_FACTOR = 0.2;
   const LANDED_WALK_THRESHOLD = 0.2;
   const MIN_THROW_SPEED = 0.5;
-  const GRAVITY = 0.35;
+  const GRAVITY = 0.8;
   const GROUND = 8;    // bottom offset px
   const BOUNCE = 0.2;
   let x = 120, y = 0;   // y = ระยะจากพื้น (0 = บนพื้น)
@@ -82,6 +83,9 @@
 
   const petEl = document.createElement("div");
   petEl.className = "bp-pet";
+  // ตั้งตำแหน่งเริ่มต้นก่อน append เพื่อไม่ให้กระพริบที่ซ้ายบน
+  petEl.style.setProperty("left", Math.round(x) + "px", "important");
+  petEl.style.setProperty("bottom", Math.round(y + GROUND) + "px", "important");
 
   const sprite = document.createElement("span");
   sprite.className = "bp-sprite";
@@ -168,8 +172,8 @@
 
   function positionPet() {
     // x = left, y = ระยะจากด้านล่าง viewport
-    petEl.style.left = Math.round(x) + "px";
-    petEl.style.bottom = Math.round(y + GROUND) + "px";
+    petEl.style.setProperty("left", Math.round(x) + "px", "important");
+    petEl.style.setProperty("bottom", Math.round(y + GROUND) + "px", "important");
   }
 
   function setAnim(cls) {
@@ -199,7 +203,10 @@
 
   function loop(ts) {
     requestAnimationFrame(loop);
-    if (!enabled || dragging) return;
+    if (!enabled || dragging) {
+      lastT = ts; // keep lastT fresh so dt isn't huge on resume
+      return;
+    }
     const dt = Math.min(ts - lastT, 50);
     lastT = ts;
 
@@ -215,17 +222,22 @@
 
       // ลงพื้น
       if (y <= 0) {
-        y = 0; vy = 0;
-        if (Math.abs(vx) > LANDED_WALK_THRESHOLD) {
-          // กระดอนแล้วเดินต่อ
-          vx *= LAND_WALK_SPEED_FACTOR;
-          say(getPet().land);
-          state = "walk";
-          setAnim(vx > 0 ? "walk-r" : "walk-l");
+        y = 0;
+        if (vy < -BOUNCE * 60) {
+          // กระดอนเล็กน้อย
+          vy = Math.abs(vy) * BOUNCE;
         } else {
-          vx = 0;
-          say(getPet().land);
-          goIdle();
+          vy = 0;
+          if (Math.abs(vx) > LANDED_WALK_THRESHOLD) {
+            vx *= LAND_WALK_SPEED_FACTOR;
+            say(getPet().land);
+            state = "walk";
+            setAnim(vx > 0 ? "walk-r" : "walk-l");
+          } else {
+            vx = 0;
+            say(getPet().land);
+            goIdle();
+          }
         }
       }
       positionPet();
@@ -308,8 +320,16 @@
       say(getPet().thrown);
     } else {
       // วางลงเฉยๆ
-      if (y <= 0) { y = 0; goIdle(); }
-      else { state = "thrown"; vx = 0; vy = 0; } // ตกลงมา
+      if (y <= 0) {
+        y = 0;
+        goIdle();
+      } else {
+        // ตกลงมาจากกลางอากาศ
+        state = "thrown";
+        setAnim("thrown");
+        vx = 0;
+        vy = -1; // เริ่มตก — gravity จะดึงให้ตกเร็วขึ้นเรื่อยๆ
+      }
     }
   }
 
@@ -409,7 +429,6 @@
 
   sumBtn.addEventListener("click", () => handlePageAction("summarize", "กำลังสรุปหน้าเว็บ..."));
   groupBtn.addEventListener("click", () => handlePageAction("group_tabs", "กำลังวิเคราะห์และจัดกลุ่มแท็บ..."));
-  anaBtn.addEventListener("click", () => handlePageAction("analyze", "กำลังวิเคราะห์หน้านี้..."));
 
   function handlePageAction(action, thinkingMsg, options = {}) {
     closeInput();
