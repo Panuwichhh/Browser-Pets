@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Browser Pets — AI ข้างจอ",
+  "name": "Browser Pets — AI",
   "version": "1.0.0",
-  "description": "สัตว์เลี้ยง AI เดินเล่นใน browser คุยได้ทุกหน้าเว็บ",
+  "description": "Pets AI on your browser!",
   "permissions": [
     "storage",
     "activeTab",
@@ -31,9 +31,15 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["content/pet.js"],
-      "css": ["content/pet.css"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content/pet.js"
+      ],
+      "css": [
+        "content/pet.css"
+      ],
       "run_at": "document_end"
     }
   ]

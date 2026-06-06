@@ -13,13 +13,77 @@ const HINTS = {
 
 let cfg = { enabled: true, petId: "cat", provider: "claude", model: "", apiKey: "", language: "th" };
 
+function saveAllSettings(callback) {
+  const { apiKey: key, ...prefs } = cfg;
+  chrome.storage.sync.set({ petSettings: prefs }, () => {
+    chrome.storage.local.set({ petApiKey: key || "" }, callback);
+  });
+}
+
+// ---- API Key security helpers ----
+
+const KEY_PREFIXES = { claude: "sk-ant-", openai: "sk-", gemini: "AIza" };
+
+function maskKey(key) {
+  if (!key || key.length < 8) return "";
+  return key.slice(0, 7) + "••••••••••••" + key.slice(-4);
+}
+
+function validateKeyFormat(key, provider) {
+  if (!key) return null;
+  const prefix = KEY_PREFIXES[provider];
+  if (prefix && !key.startsWith(prefix)) {
+    return `key ของ ${provider} ควรเริ่มต้นด้วย "${prefix}..."`;
+  }
+  return null;
+}
+
+function lockKeyInput() {
+  const inp = document.getElementById("api-key");
+  if (!cfg.apiKey) return;
+  inp.type = "password";
+  inp.value = maskKey(cfg.apiKey);
+  inp.setAttribute("readonly", "");
+  inp.title = "คลิกเพื่อเปลี่ยน API key";
+  clearKeyWarn();
+}
+
+function unlockKeyInput() {
+  const inp = document.getElementById("api-key");
+  inp.value = "";
+  inp.removeAttribute("readonly");
+  inp.title = "";
+  inp.type = "password";
+  clearKeyWarn();
+  inp.focus();
+}
+
+function showKeyWarn(msg) {
+  document.getElementById("key-warn").textContent = msg;
+  document.getElementById("key-warn").classList.add("show");
+  document.getElementById("key-ok").classList.remove("show");
+}
+
+function showKeyOk() {
+  document.getElementById("key-ok").classList.add("show");
+  document.getElementById("key-warn").classList.remove("show");
+}
+
+function clearKeyWarn() {
+  document.getElementById("key-warn").classList.remove("show");
+  document.getElementById("key-ok").classList.remove("show");
+}
+
 // ---- Wire up all buttons after DOM ready ----
 document.addEventListener("DOMContentLoaded", () => {
 
   // load saved settings
-  chrome.storage.sync.get(["petSettings"], (res) => {
-    if (res && res.petSettings) cfg = { ...cfg, ...res.petSettings };
-    renderUI();
+  chrome.storage.sync.get(["petSettings"], (syncRes) => {
+    chrome.storage.local.get(["petApiKey"], (localRes) => {
+      if (syncRes && syncRes.petSettings) cfg = { ...cfg, ...syncRes.petSettings };
+      cfg.apiKey = localRes.petApiKey || cfg.apiKey || "";
+      renderUI();
+    });
   });
 
   // Toggle on/off
@@ -27,8 +91,7 @@ document.addEventListener("DOMContentLoaded", () => {
     cfg.enabled = !cfg.enabled;
     document.getElementById("toggle").classList.toggle("on", cfg.enabled);
     document.getElementById("toggle-label").textContent = cfg.enabled ? "เปิด" : "ปิด";
-    chrome.storage.sync.set({ petSettings: cfg });
-    msgTab({ type: "TOGGLE" });
+    saveAllSettings(() => msgTab({ type: "TOGGLE" }));
   });
 
   // Pet buttons
@@ -37,8 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
       cfg.petId = btn.dataset.pet;
       document.querySelectorAll(".pet-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
-      chrome.storage.sync.set({ petSettings: cfg });
-      msgTab({ type: "SET_PET", pet: cfg.petId });
+      saveAllSettings(() => msgTab({ type: "SET_PET", pet: cfg.petId }));
     });
   });
 
@@ -54,16 +116,44 @@ document.addEventListener("DOMContentLoaded", () => {
   // Language change (Instant auto-save like toggle/pet picker)
   document.getElementById("language").addEventListener("change", () => {
     cfg.language = document.getElementById("language").value;
-    chrome.storage.sync.set({ petSettings: cfg }, () => {
-      updateStatus();
-      msgTab({ type: "RELOAD_SETTINGS" });
-    });
+    saveAllSettings(() => { updateStatus(); msgTab({ type: "RELOAD_SETTINGS" }); });
   });
 
-  // Eye button — show/hide key
+  // Eye button — show/hide key (handles both locked and edit modes)
   document.getElementById("eye-btn").addEventListener("click", () => {
     const inp = document.getElementById("api-key");
-    inp.type = inp.type === "password" ? "text" : "password";
+    if (inp.hasAttribute("readonly")) {
+      // Locked mode: toggle between masked and real key
+      if (inp.type === "text") {
+        inp.value = maskKey(cfg.apiKey);
+        inp.type = "password";
+      } else {
+        inp.value = cfg.apiKey;
+        inp.type = "text";
+      }
+    } else {
+      inp.type = inp.type === "password" ? "text" : "password";
+    }
+  });
+
+  // Click on locked input → unlock for editing
+  document.getElementById("api-key").addEventListener("click", () => {
+    if (document.getElementById("api-key").hasAttribute("readonly")) unlockKeyInput();
+  });
+
+  // Blur: validate format if editing, re-lock if empty
+  document.getElementById("api-key").addEventListener("blur", () => {
+    const inp = document.getElementById("api-key");
+    if (inp.hasAttribute("readonly")) return;
+    const val = inp.value.trim();
+    if (!val) {
+      // User cleared the field without entering new key — restore locked view
+      if (cfg.apiKey) lockKeyInput();
+      return;
+    }
+    const warn = validateKeyFormat(val, cfg.provider || document.getElementById("provider").value);
+    if (warn) showKeyWarn(warn);
+    else showKeyOk();
   });
 
   // Save
@@ -71,8 +161,17 @@ document.addEventListener("DOMContentLoaded", () => {
     cfg.provider = document.getElementById("provider").value;
     cfg.model = document.getElementById("model").value.trim();
     cfg.language = document.getElementById("language").value;
-    cfg.apiKey = document.getElementById("api-key").value.trim();
-    chrome.storage.sync.set({ petSettings: cfg }, () => {
+    const keyInp = document.getElementById("api-key");
+    if (!keyInp.hasAttribute("readonly")) {
+      // Only update apiKey if user actually edited the field
+      const newKey = keyInp.value.trim();
+      const warn = newKey ? validateKeyFormat(newKey, cfg.provider) : null;
+      if (warn) { showKeyWarn(warn); return; }
+      cfg.apiKey = newKey;
+    }
+    saveAllSettings(() => {
+      if (cfg.apiKey) lockKeyInput();
+      clearKeyWarn();
       const st = document.getElementById("save-status");
       st.classList.add("show");
       setTimeout(() => st.classList.remove("show"), 2000);
@@ -86,11 +185,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const btn = document.getElementById("btn-test");
     btn.textContent = "กำลังทดสอบ...";
     btn.disabled = true;
+    const keyInp = document.getElementById("api-key");
     const tmp = {
       provider: document.getElementById("provider").value,
       model: document.getElementById("model").value.trim(),
       language: document.getElementById("language").value,
-      apiKey: document.getElementById("api-key").value.trim(),
+      apiKey: keyInp.hasAttribute("readonly") ? cfg.apiKey : keyInp.value.trim(),
     };
     const testPrompt = tmp.language === "en" ? "Say a short greeting in English" : "ทักทายสั้นๆ เป็นภาษาไทย";
     chrome.runtime.sendMessage(
@@ -124,7 +224,8 @@ function renderUI() {
   document.getElementById("provider").value = cfg.provider || "claude";
   document.getElementById("model").value = cfg.model || "";
   document.getElementById("language").value = cfg.language || "th";
-  document.getElementById("api-key").value = cfg.apiKey || "";
+  if (cfg.apiKey) lockKeyInput();
+  else document.getElementById("api-key").value = "";
   renderPresets(cfg.provider || "claude");
   document.getElementById("api-hint").innerHTML = HINTS[cfg.provider] || HINTS.claude;
   updateStatus();

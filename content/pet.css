@@ -75,32 +75,60 @@
   100% { transform: scale(1) rotate(0); }
 }
 
+/* Close button — shows above pet on hover */
+.bp-close-btn {
+  position: absolute !important;
+  top: -20px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: 18px !important;
+  height: 18px !important;
+  background: rgba(30,30,30,0.65) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 50% !important;
+  font-size: 9px !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  opacity: 0 !important;
+  transition: opacity 0.15s, background 0.15s !important;
+  z-index: 20 !important;
+  pointer-events: all !important;
+}
+.bp-pet:hover .bp-close-btn { opacity: 1 !important; }
+.bp-close-btn:hover { background: rgba(210,40,40,0.85) !important; }
+
 /* Speech bubble */
 .bp-bubble {
   position: absolute !important;
   bottom: 92px !important;
   left: 50% !important;
   transform: translateX(-50%) !important;
-  display: inline-block !important;
+  display: block !important;
+  width: 220px !important;
   background: #fff !important;
-  border: 1.5px solid #ddd !important;
-  border-radius: 14px !important;
-  padding: 7px 12px !important;
+  border: 1.5px solid #e0e0e0 !important;
+  border-radius: 16px !important;
+  padding: 10px 14px !important;
   font-size: 13px !important;
-  line-height: 1.45 !important;
-  max-width: 320px !important;
-  white-space: normal !important;
+  line-height: 1.6 !important;
+  white-space: pre-wrap !important;
   box-sizing: border-box !important;
-  text-align: center !important;
+  text-align: left !important;
   color: #222 !important;
   pointer-events: none !important;
   opacity: 0 !important;
   transition: opacity 0.2s ease !important;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.13) !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.12) !important;
   z-index: 10 !important;
+  word-break: break-word !important;
 }
 .bp-bubble.show    { opacity: 1 !important; }
-.bp-bubble.thinking{ color: #999 !important; font-style: italic !important; }
+.bp-bubble.thinking{ color: #aaa !important; font-style: italic !important; }
 .bp-bubble::after {
   content: '' !important;
   position: absolute !important;

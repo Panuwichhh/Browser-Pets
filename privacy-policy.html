@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — Browser Pets</title>
+  <style>
+    :root {
+      --accent: #6c5ce7;
+      --text: #1a1a1a;
+      --muted: #555;
+      --border: #e8e8e8;
+      --bg: #fafafa;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text);
+      background: var(--bg);
+    }
+    header {
+      background: var(--accent);
+      color: white;
+      padding: 36px 24px;
+      text-align: center;
+    }
+    header h1 { font-size: 26px; margin-bottom: 6px; }
+    header p  { opacity: 0.85; font-size: 14px; }
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+    .lang-toggle {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-bottom: 32px;
+    }
+    .lang-toggle button {
+      padding: 4px 14px;
+      border-radius: 999px;
+      border: 1.5px solid var(--border);
+      background: white;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--muted);
+      transition: all .15s;
+    }
+    .lang-toggle button.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    section {
+      margin-bottom: 36px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px 28px;
+    }
+    section h2 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+    section p, section li { color: var(--muted); font-size: 14px; line-height: 1.75; }
+    ul { padding-left: 20px; }
+    li { margin-bottom: 6px; }
+    .badge {
+      display: inline-block;
+      background: #edf2ff;
+      color: var(--accent);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-right: 4px;
+    }
+    .highlight {
+      background: #f0faf4;
+      border-left: 3px solid #27ae60;
+      border-radius: 0 8px 8px 0;
+      padding: 10px 16px;
+      font-size: 14px;
+      color: #1a6636;
+      margin-top: 12px;
+    }
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 16px;
+    }
+    .updated { font-size: 12px; color: #aaa; margin-bottom: 24px; text-align: right; }
+
+    /* language visibility */
+    [lang="en"] { display: none; }
+    body.en [lang="th"] { display: none; }
+    body.en [lang="en"] { display: revert; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🐾 Browser Pets</h1>
+  <p lang="th">นโยบายความเป็นส่วนตัว</p>
+  <p lang="en">Privacy Policy</p>
+</header>
+
+<div class="container">
+  <div class="lang-toggle">
+    <button class="active" onclick="setLang('th')">🇹🇭 ภาษาไทย</button>
+    <button onclick="setLang('en')">🇺🇸 English</button>
+  </div>
+
+  <p class="updated" lang="th">อัปเดตล่าสุด: มิถุนายน 2026</p>
+  <p class="updated" lang="en">Last updated: June 2026</p>
+
+  <!-- ภาษาไทย -->
+
+  <section lang="th">
+    <h2>📋 ภาพรวม</h2>
+    <p>Browser Pets เป็น Chrome Extension ที่แสดงสัตว์เลี้ยง AI เดินเล่นในหน้าเว็บ ผู้พัฒนา <strong>ไม่ได้รวบรวม บันทึก หรือส่งข้อมูลของคุณไปยังเซิร์ฟเวอร์ใดๆ ของตนเอง</strong></p>
+    <div class="highlight">ข้อมูลทั้งหมดถูกเก็บไว้ในอุปกรณ์ของคุณเท่านั้น หรือส่งตรงไปยัง AI Provider ที่คุณเลือกเอง</div>
+  </section>
+
+  <section lang="th">
+    <h2>💾 ข้อมูลที่บันทึกในอุปกรณ์</h2>
+    <p>Extension เก็บข้อมูลต่อไปนี้ในอุปกรณ์ของคุณเท่านั้น ผ่าน Chrome Storage API:</p>
+    <ul>
+      <li><span class="badge">local</span><strong>API Key</strong> — บันทึกใน <code>chrome.storage.local</code> ไม่ sync ข้ามอุปกรณ์</li>
+      <li><span class="badge">sync</span><strong>การตั้งค่า</strong> — ตัวละคร, ภาษา, Provider, โมเดล, สถานะเปิด/ปิด</li>
+    </ul>
+    <p style="margin-top:10px">ข้อมูลเหล่านี้ไม่ถูกส่งออกนอกอุปกรณ์ ยกเว้นการ sync Chrome ปกติของ Google (เฉพาะ settings ทั่วไป ไม่รวม API Key)</p>
+  </section>
+
+  <section lang="th">
+    <h2>🤖 ข้อมูลที่ส่งให้ AI Provider</h2>
+    <p>เมื่อคุณใช้ฟีเจอร์ AI (ถามคำถาม / สรุปหน้าเว็บ / จัดกลุ่มแท็บ) Extension จะส่งข้อมูลต่อไปนี้ตรงไปยัง Provider ที่คุณเลือก:</p>
+    <ul>
+      <li>ข้อความที่คุณพิมพ์</li>
+      <li>ชื่อหน้าเว็บและ URL ปัจจุบัน</li>
+      <li>เนื้อหาข้อความในหน้าเว็บ (เฉพาะตอนใช้ "สรุปหน้า")</li>
+      <li>รายชื่อแท็บที่เปิดอยู่ (เฉพาะตอนใช้ "จัดกลุ่มแท็บ")</li>
+    </ul>
+    <p style="margin-top:10px">การใช้งานข้อมูลนี้อยู่ภายใต้นโยบายของ Provider ที่คุณเลือก:</p>
+    <ul>
+      <li><a href="https://www.anthropic.com/privacy" target="_blank">Anthropic (Claude) Privacy Policy</a></li>
+      <li><a href="https://openai.com/privacy" target="_blank">OpenAI Privacy Policy</a></li>
+      <li><a href="https://policies.google.com/privacy" target="_blank">Google (Gemini) Privacy Policy</a></li>
+    </ul>
+  </section>
+
+  <section lang="th">
+    <h2>🔐 สิทธิ์ที่ Extension ขอ</h2>
+    <ul>
+      <li><strong>storage</strong> — บันทึกการตั้งค่าและ API Key ในอุปกรณ์</li>
+      <li><strong>activeTab / tabs</strong> — อ่านชื่อแท็บสำหรับฟีเจอร์จัดกลุ่มและควบคุมสื่อ</li>
+      <li><strong>scripting</strong> — แสดงตัวละครในหน้าเว็บ</li>
+      <li><strong>tabGroups</strong> — จัดกลุ่มแท็บตามคำสั่ง AI</li>
+      <li><strong>&lt;all_urls&gt;</strong> — แสดงตัวละครได้ในทุกหน้าเว็บ</li>
+    </ul>
+  </section>
+
+  <section lang="th">
+    <h2>👶 ผู้ใช้งานที่เป็นเด็ก</h2>
+    <p>Extension นี้ไม่ได้มุ่งเป้าหมายไปที่เด็กอายุต่ำกว่า 13 ปี และไม่มีการรวบรวมข้อมูลส่วนบุคคลใดๆ โดยตั้งใจ</p>
+  </section>
+
+  <section lang="th">
+    <h2>📬 ติดต่อ</h2>
+    <p>หากมีคำถามเกี่ยวกับนโยบายนี้ สามารถเปิด Issue ได้ที่:<br>
+    <a href="https://github.com/Panuwichhh/Brower-Pets/issues" target="_blank">github.com/Panuwichhh/Brower-Pets/issues</a></p>
+  </section>
+
+  <!-- English -->
+
+  <section lang="en">
+    <h2>📋 Overview</h2>
+    <p>Browser Pets is a Chrome Extension that displays AI pets walking around in your browser. The developer <strong>does not collect, store, or transmit your data to any servers they own.</strong></p>
+    <div class="highlight">All data stays on your device or is sent directly to the AI Provider you choose.</div>
+  </section>
+
+  <section lang="en">
+    <h2>💾 Data Stored on Your Device</h2>
+    <p>The extension stores the following data on your device only via the Chrome Storage API:</p>
+    <ul>
+      <li><span class="badge">local</span><strong>API Key</strong> — stored in <code>chrome.storage.local</code>, never synced across devices</li>
+      <li><span class="badge">sync</span><strong>Preferences</strong> — selected pet, language, provider, model, enabled state</li>
+    </ul>
+    <p style="margin-top:10px">This data is never transmitted outside your device, except for Google's standard Chrome sync (preferences only — API Key is excluded).</p>
+  </section>
+
+  <section lang="en">
+    <h2>🤖 Data Sent to AI Providers</h2>
+    <p>When you use AI features (chat / summarize / group tabs), the extension sends the following directly to the provider you selected:</p>
+    <ul>
+      <li>Your typed message</li>
+      <li>Current page title and URL</li>
+      <li>Page text content (only when using "Summarize Page")</li>
+      <li>Open tab titles and URLs (only when using "Group Tabs")</li>
+    </ul>
+    <p style="margin-top:10px">This data is governed by your chosen provider's privacy policy:</p>
+    <ul>
+      <li><a href="https://www.anthropic.com/privacy" target="_blank">Anthropic (Claude) Privacy Policy</a></li>
+      <li><a href="https://openai.com/privacy" target="_blank">OpenAI Privacy Policy</a></li>
+      <li><a href="https://policies.google.com/privacy" target="_blank">Google (Gemini) Privacy Policy</a></li>
+    </ul>
+  </section>
+
+  <section lang="en">
+    <h2>🔐 Permissions Used</h2>
+    <ul>
+      <li><strong>storage</strong> — save settings and API Key on your device</li>
+      <li><strong>activeTab / tabs</strong> — read tab titles for grouping and media control features</li>
+      <li><strong>scripting</strong> — inject the pet into web pages</li>
+      <li><strong>tabGroups</strong> — group tabs as instructed by AI</li>
+      <li><strong>&lt;all_urls&gt;</strong> — display the pet on any website you visit</li>
+    </ul>
+  </section>
+
+  <section lang="en">
+    <h2>👶 Children's Privacy</h2>
+    <p>This extension is not directed at children under 13 and does not knowingly collect any personal information.</p>
+  </section>
+
+  <section lang="en">
+    <h2>📬 Contact</h2>
+    <p>For questions about this policy, please open an issue at:<br>
+    <a href="https://github.com/Panuwichhh/Brower-Pets/issues" target="_blank">github.com/Panuwichhh/Brower-Pets/issues</a></p>
+  </section>
+
+  <footer>
+    Browser Pets &copy; 2026 · <a href="https://github.com/Panuwichhh/Brower-Pets" target="_blank">GitHub</a>
+  </footer>
+</div>
+
+<script>
+  function setLang(lang) {
+    document.body.classList.toggle("en", lang === "en");
+    document.querySelectorAll(".lang-toggle button").forEach((b, i) => {
+      b.classList.toggle("active", (i === 0 && lang === "th") || (i === 1 && lang === "en"));
+    });
+  }
+</script>
+</body>
+</html>

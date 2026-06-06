@@ -221,6 +221,38 @@
       padding: 2px;
     }
 
+    #api-key[readonly] {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      color: #666;
+      background: #f5f5f5;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+    }
+
+    #api-key[readonly]:hover {
+      background: #f0eeff;
+      border-color: #6c5ce7;
+    }
+
+    .key-warn {
+      font-size: 11px;
+      color: #e17055;
+      margin-top: 5px;
+      display: none;
+    }
+
+    .key-warn.show { display: block; }
+
+    .key-ok {
+      font-size: 11px;
+      color: #27ae60;
+      margin-top: 5px;
+      display: none;
+    }
+
+    .key-ok.show { display: block; }
+
     .model-presets {
       display: flex;
       gap: 5px;
@@ -385,9 +417,11 @@
     <div class="form-group">
       <label>API Key</label>
       <div class="key-wrap">
-        <input type="password" id="api-key" placeholder="วาง API key ที่นี่">
+        <input type="password" id="api-key" placeholder="วาง API key ที่นี่" autocomplete="off" spellcheck="false">
         <button class="eye-btn" id="eye-btn" title="แสดง/ซ่อน">👁</button>
       </div>
+      <div class="key-warn" id="key-warn"></div>
+      <div class="key-ok" id="key-ok">✓ รูปแบบ key ถูกต้อง</div>
       <div class="api-hint" id="api-hint">
         รับ key ได้ที่ <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>
       </div>

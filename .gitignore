@@ -1,0 +1,22 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.user
+
+# Node (ถ้าเพิ่ม tooling ในอนาคต)
+node_modules/
+npm-debug.log*
+
+# Build output
+dist/
+build/
+*.zip
+*.crx
+
+# Claude Code
+.claude/

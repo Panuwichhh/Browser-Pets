@@ -132,33 +132,21 @@ async function getAllWindowTabs() {
 }
 
 function parseAIResponse(text) {
-  console.log("Raw AI response:", text);
   try {
     let jsonStr = text.trim();
-    
-    // Find the first { and last } to extract JSON block from conversational text
     const startIdx = jsonStr.indexOf("{");
     const endIdx = jsonStr.lastIndexOf("}");
-    
     if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
       jsonStr = jsonStr.substring(startIdx, endIdx + 1);
     }
-    
     const parsed = JSON.parse(jsonStr);
-    if (parsed && typeof parsed.reply === "string") {
-      console.log("Successfully parsed JSON response:", parsed);
-      return parsed;
-    }
-  } catch (e) {
-    console.error("Failed to parse JSON response, falling back to text:", e, text);
-  }
+    if (parsed && typeof parsed.reply === "string") return parsed;
+  } catch (e) { /* fall through to plain text */ }
   return { reply: text, action: null };
 }
 
 async function executeTabAction(parsed) {
   if (!parsed || !parsed.action) return;
-  
-  console.log("Executing tab action:", parsed.action, parsed);
   try {
     if (parsed.action === "open_tab" && parsed.url) {
       let url = parsed.url;
@@ -185,9 +173,7 @@ async function executeTabAction(parsed) {
         }
       }
     }
-  } catch (err) {
-    console.error("Error executing tab action:", err);
-  }
+  } catch (err) { /* tab action failed silently */ }
 }
 
 async function handleAI(userText, pageContext, settings, activeTabId = null) {
@@ -328,7 +314,6 @@ ${tabsContext}
     return { reply: "ยังไม่รองรับ provider นี้" };
 
   } catch (err) {
-    console.error("AI error:", err);
     return { reply: `เกิดข้อผิดพลาด: ${err.message}` };
   }
 }

@@ -91,6 +91,18 @@
   sprite.className = "bp-sprite";
   sprite.textContent = "🐱";
 
+  const closeBtn = document.createElement("button");
+  closeBtn.className = "bp-close-btn";
+  closeBtn.textContent = "✕";
+  closeBtn.title = "ซ่อนสัตว์เลี้ยง";
+  closeBtn.addEventListener("mousedown", (e) => { e.stopPropagation(); e.preventDefault(); });
+  closeBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    enabled = false;
+    root.style.display = "none";
+    saveSettings();
+  });
+
   const bubble = document.createElement("div");
   bubble.className = "bp-bubble";
 
@@ -142,6 +154,7 @@
   petEl.appendChild(bubble);
   petEl.appendChild(inputWrap);
   petEl.appendChild(sprite);
+  petEl.appendChild(closeBtn);
   root.appendChild(petEl);
   document.body.appendChild(root);
 
@@ -199,22 +212,35 @@
     petEl.className = "bp-pet " + cls;
   }
 
+  function saveSettings() {
+    try {
+      chrome.storage.sync.set({ petSettings: { petId, enabled, provider, model, language } });
+      chrome.storage.local.set({ petApiKey: apiKey });
+    } catch (e) { }
+  }
+
   // ---- Load settings ----
   try {
-    chrome.storage.sync.get(["petSettings"], (res) => {
+    chrome.storage.sync.get(["petSettings"], (syncRes) => {
       if (chrome.runtime.lastError) return;
-      if (res && res.petSettings) {
-        const s = res.petSettings;
-        if (s.petId) petId = s.petId;
-        if (s.provider) provider = s.provider;
-        if (s.apiKey) apiKey = s.apiKey;
-        if (s.model) model = s.model;
-        if (s.language) language = s.language;
-        enabled = s.enabled !== false;
-      }
-      sprite.textContent = getPet().emoji;
-      root.style.display = enabled ? "" : "none";
-      updateInputLanguage();
+      chrome.storage.local.get(["petApiKey"], (localRes) => {
+        if (syncRes && syncRes.petSettings) {
+          const s = syncRes.petSettings;
+          if (s.petId) petId = s.petId;
+          if (s.provider) provider = s.provider;
+          if (s.model) model = s.model;
+          if (s.language) language = s.language;
+          enabled = s.enabled !== false;
+          // migrate legacy apiKey from sync → local (one-time)
+          if (s.apiKey && !localRes.petApiKey) {
+            chrome.storage.local.set({ petApiKey: s.apiKey });
+          }
+        }
+        apiKey = localRes.petApiKey || "";
+        sprite.textContent = getPet().emoji;
+        root.style.display = enabled ? "" : "none";
+        updateInputLanguage();
+      });
     });
   } catch (e) { }
 
@@ -516,29 +542,31 @@
       if (msg.type === "TOGGLE") {
         enabled = !enabled;
         root.style.display = enabled ? "" : "none";
-        try { chrome.storage.sync.set({ petSettings: { petId, enabled, provider, apiKey, model, language } }); } catch (e) { }
+        saveSettings();
       }
       if (msg.type === "SET_PET") {
         petId = msg.pet;
         sprite.textContent = getPet().emoji;
         if (Math.random() < 0.25) say(getPet().idle);
-        try { chrome.storage.sync.set({ petSettings: { petId, enabled, provider, apiKey, model, language } }); } catch (e) { }
+        saveSettings();
       }
       if (msg.type === "RELOAD_SETTINGS") {
         try {
-          chrome.storage.sync.get(["petSettings"], (res) => {
-            if (res && res.petSettings) {
-              const s = res.petSettings;
-              if (s.petId) petId = s.petId;
-              if (s.provider) provider = s.provider;
-              if (s.apiKey) apiKey = s.apiKey;
-              if (s.model) model = s.model;
-              if (s.language) language = s.language;
-              enabled = s.enabled !== false;
+          chrome.storage.sync.get(["petSettings"], (syncRes) => {
+            chrome.storage.local.get(["petApiKey"], (localRes) => {
+              if (syncRes && syncRes.petSettings) {
+                const s = syncRes.petSettings;
+                if (s.petId) petId = s.petId;
+                if (s.provider) provider = s.provider;
+                if (s.model) model = s.model;
+                if (s.language) language = s.language;
+                enabled = s.enabled !== false;
+              }
+              apiKey = localRes.petApiKey || "";
               sprite.textContent = getPet().emoji;
               root.style.display = enabled ? "" : "none";
               updateInputLanguage();
-            }
+            });
           });
         } catch (e) { }
       }
@@ -687,9 +715,7 @@
   }
 
   function updateYTWidget() {
-    // Only auto-show if media detected; always show if manually opened
-    if (!ytManualOpen && !hasMedia()) { ytWidget.classList.remove("show"); return; }
-    if (ytUserClosed) return;
+    if (!ytManualOpen || ytUserClosed) return;
 
     const vid = getMedia();
     ytWidget.classList.add("show");
@@ -804,7 +830,7 @@
   const ytTitleNode = document.querySelector("title");
   if (ytTitleNode) {
     new MutationObserver(() => {
-      if (!ytRemoteTabId) { ytUserClosed = false; setTimeout(updateYTWidget, 800); }
+      if (!ytRemoteTabId) { setTimeout(updateYTWidget, 800); }
     }).observe(ytTitleNode, { childList: true });
   }
 
@@ -914,7 +940,6 @@
     });
   }, true);
 
-  // Auto-show on media pages without manual click
   updateYTWidget();
 
   // ---- Start ----
