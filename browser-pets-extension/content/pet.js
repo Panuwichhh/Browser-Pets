@@ -44,7 +44,7 @@
     },
   ];
 
-  let petId = "cat", enabled = true, apiKey = "", provider = "claude", model = "";
+  let petId = "cat", enabled = true, apiKey = "", provider = "claude", model = "", language = "th";
   let ytRemoteTabId = null;
   // Walk/idle tuning — reduce walking dramatically to keep pet mostly still
   const WALK_SPEED = 0.01;                 // very slow horizontal speed
@@ -176,6 +176,25 @@
     petEl.style.setProperty("bottom", Math.round(y + GROUND) + "px", "important");
   }
 
+  // Set initial placeholders to support English if saved
+  function updateInputLanguage() {
+    if (language === "en") {
+      inputEl.placeholder = "Ask anything...";
+      sendBtn.textContent = "Send";
+      noKeyMsg.textContent = "Click 🐾 on toolbar to enter API key";
+      sumBtn.textContent = "📝 Summarize Page";
+      groupBtn.textContent = "📁 Group Tabs";
+      musicBtn.textContent = "🎵 Music Control";
+    } else {
+      inputEl.placeholder = "ถามอะไรก็ได้...";
+      sendBtn.textContent = "ส่ง";
+      noKeyMsg.textContent = "กด 🐾 ที่ toolbar เพื่อใส่ API key";
+      sumBtn.textContent = "📝 สรุปหน้านี้";
+      groupBtn.textContent = "📁 จัดกลุ่มแท็บ";
+      musicBtn.textContent = "🎵 ควบคุมเพลง";
+    }
+  }
+
   function setAnim(cls) {
     petEl.className = "bp-pet " + cls;
   }
@@ -190,10 +209,12 @@
         if (s.provider) provider = s.provider;
         if (s.apiKey) apiKey = s.apiKey;
         if (s.model) model = s.model;
+        if (s.language) language = s.language;
         enabled = s.enabled !== false;
       }
       sprite.textContent = getPet().emoji;
       root.style.display = enabled ? "" : "none";
+      updateInputLanguage();
     });
   } catch (e) { }
 
@@ -427,8 +448,14 @@
 
   document.addEventListener("click", () => { if (inputOpen) closeInput(); });
 
-  sumBtn.addEventListener("click", () => handlePageAction("summarize", "กำลังสรุปหน้าเว็บ..."));
-  groupBtn.addEventListener("click", () => handlePageAction("group_tabs", "กำลังวิเคราะห์และจัดกลุ่มแท็บ..."));
+  sumBtn.addEventListener("click", () => {
+    const loaderMsg = language === "en" ? "Summarizing page..." : "กำลังสรุปหน้าเว็บ...";
+    handlePageAction("summarize", loaderMsg);
+  });
+  groupBtn.addEventListener("click", () => {
+    const loaderMsg = language === "en" ? "Analyzing and grouping tabs..." : "กำลังวิเคราะห์และจัดกลุ่มแท็บ...";
+    handlePageAction("group_tabs", loaderMsg);
+  });
 
   function handlePageAction(action, thinkingMsg, options = {}) {
     closeInput();
@@ -436,13 +463,13 @@
     bubble.className = "bp-bubble show thinking";
     try {
       chrome.runtime.sendMessage(
-        { type: "PAGE_AI", action, options, settings: { apiKey, provider, model } },
+        { type: "PAGE_AI", action, options, settings: { apiKey, provider, model, language } },
         (res) => {
           if (res && res.reply) say([res.reply], true);
-          else say(["เกิดข้อผิดพลาด ลองใหม่นะ!"]);
+          else say([language === "en" ? "An error occurred, please try again!" : "เกิดข้อผิดพลาด ลองใหม่นะ!"]);
         }
       );
-    } catch (e) { say(["ลอง reload หน้านี้ก่อนนะ"]); }
+    } catch (e) { say([language === "en" ? "Please reload this page first" : "ลอง reload หน้านี้ก่อนนะ"]); }
   }
 
   sendBtn.addEventListener("click", sendMsg);
@@ -455,20 +482,20 @@
     const text = inputEl.value.trim();
     if (!text) return;
     closeInput();
-    bubble.textContent = "กำลังคิด...";
+    bubble.textContent = language === "en" ? "Thinking..." : "กำลังคิด...";
     bubble.className = "bp-bubble show thinking";
     try {
       chrome.runtime.sendMessage(
         {
           type: "ASK_AI", text, pageContext: `${document.title} · ${location.hostname}`,
-          settings: { apiKey, provider, model }
+          settings: { apiKey, provider, model, language }
         },
         (res) => {
           if (res && res.reply) say([res.reply], true);
-          else say(["เกิดข้อผิดพลาด ลองใหม่นะ!"]);
+          else say([language === "en" ? "An error occurred, please try again!" : "เกิดข้อผิดพลาด ลองใหม่นะ!"]);
         }
       );
-    } catch (e) { say(["ลอง reload หน้านี้ก่อนนะ"]); }
+    } catch (e) { say([language === "en" ? "Please reload this page first" : "ลอง reload หน้านี้ก่อนนะ"]); }
   }
 
   // ---- Extension messages ----
@@ -489,13 +516,13 @@
       if (msg.type === "TOGGLE") {
         enabled = !enabled;
         root.style.display = enabled ? "" : "none";
-        try { chrome.storage.sync.set({ petSettings: { petId, enabled, provider, apiKey, model } }); } catch (e) { }
+        try { chrome.storage.sync.set({ petSettings: { petId, enabled, provider, apiKey, model, language } }); } catch (e) { }
       }
       if (msg.type === "SET_PET") {
         petId = msg.pet;
         sprite.textContent = getPet().emoji;
         if (Math.random() < 0.25) say(getPet().idle);
-        try { chrome.storage.sync.set({ petSettings: { petId, enabled, provider, apiKey, model } }); } catch (e) { }
+        try { chrome.storage.sync.set({ petSettings: { petId, enabled, provider, apiKey, model, language } }); } catch (e) { }
       }
       if (msg.type === "RELOAD_SETTINGS") {
         try {
@@ -506,18 +533,19 @@
               if (s.provider) provider = s.provider;
               if (s.apiKey) apiKey = s.apiKey;
               if (s.model) model = s.model;
+              if (s.language) language = s.language;
               enabled = s.enabled !== false;
               sprite.textContent = getPet().emoji;
               root.style.display = enabled ? "" : "none";
+              updateInputLanguage();
             }
           });
         } catch (e) { }
       }
 
-      // ---- Media state report (for cross-tab control) ----
       if (msg.type === "GET_MEDIA_STATE") {
         const vid = document.querySelector("video") || document.querySelector("audio");
-        if (vid && vid.readyState > 0) {
+        if (vid) {
           sendResponse({
             hasMedia: true,
             paused: vid.paused,

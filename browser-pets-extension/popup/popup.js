@@ -11,7 +11,7 @@ const HINTS = {
   gemini: 'รับ key ที่ <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a>',
 };
 
-let cfg = { enabled: true, petId: "cat", provider: "claude", model: "", apiKey: "" };
+let cfg = { enabled: true, petId: "cat", provider: "claude", model: "", apiKey: "", language: "th" };
 
 // ---- Wire up all buttons after DOM ready ----
 document.addEventListener("DOMContentLoaded", () => {
@@ -51,6 +51,15 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("api-hint").innerHTML = HINTS[cfg.provider] || "";
   });
 
+  // Language change (Instant auto-save like toggle/pet picker)
+  document.getElementById("language").addEventListener("change", () => {
+    cfg.language = document.getElementById("language").value;
+    chrome.storage.sync.set({ petSettings: cfg }, () => {
+      updateStatus();
+      msgTab({ type: "RELOAD_SETTINGS" });
+    });
+  });
+
   // Eye button — show/hide key
   document.getElementById("eye-btn").addEventListener("click", () => {
     const inp = document.getElementById("api-key");
@@ -61,6 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-save").addEventListener("click", () => {
     cfg.provider = document.getElementById("provider").value;
     cfg.model = document.getElementById("model").value.trim();
+    cfg.language = document.getElementById("language").value;
     cfg.apiKey = document.getElementById("api-key").value.trim();
     chrome.storage.sync.set({ petSettings: cfg }, () => {
       const st = document.getElementById("save-status");
@@ -79,10 +89,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const tmp = {
       provider: document.getElementById("provider").value,
       model: document.getElementById("model").value.trim(),
+      language: document.getElementById("language").value,
       apiKey: document.getElementById("api-key").value.trim(),
     };
+    const testPrompt = tmp.language === "en" ? "Say a short greeting in English" : "ทักทายสั้นๆ เป็นภาษาไทย";
     chrome.runtime.sendMessage(
-      { type: "ASK_AI", text: "ทักทายสั้นๆ เป็นภาษาไทย", pageContext: "ทดสอบ", settings: tmp },
+      { type: "ASK_AI", text: testPrompt, pageContext: "ทดสอบ / Test", settings: tmp },
       (res) => {
         btn.textContent = "ทดสอบ";
         btn.disabled = false;
@@ -111,6 +123,7 @@ function renderUI() {
   // form
   document.getElementById("provider").value = cfg.provider || "claude";
   document.getElementById("model").value = cfg.model || "";
+  document.getElementById("language").value = cfg.language || "th";
   document.getElementById("api-key").value = cfg.apiKey || "";
   renderPresets(cfg.provider || "claude");
   document.getElementById("api-hint").innerHTML = HINTS[cfg.provider] || HINTS.claude;
@@ -134,7 +147,7 @@ function updateStatus() {
   const txt = document.getElementById("status-text");
   if (cfg.apiKey && cfg.apiKey.trim().length > 8) {
     dot.classList.add("ok");
-    txt.textContent = `พร้อมใช้ · ${cfg.provider} · ${cfg.model || "default model"}`;
+    txt.textContent = `พร้อมใช้ · ${cfg.provider} · ${cfg.model || "default"} · ${cfg.language === "en" ? "English" : "ภาษาไทย"}`;
   } else {
     dot.classList.remove("ok");
     txt.textContent = "ยังไม่มี API key — สัตว์เดินได้แล้ว แต่คุยยังไม่ได้";

@@ -13,16 +13,21 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   // Request page content and forward to AI for actions like summarize/analyze
   if (msg.type === "PAGE_AI") {
     const { action, options, settings } = msg;
+    const isEn = settings && settings.language === "en";
 
     if (action === "group_tabs") {
       chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
         const tab = tabs[0];
         const tabId = tab ? tab.id : null;
         try {
-          const res = await handleAI("กรุณาวิเคราะห์และจัดกลุ่มแท็บที่เปิดอยู่ทั้งหมดตามความเหมาะสม", "จัดกลุ่มแท็บ", settings || {}, tabId);
+          const reqText = isEn 
+            ? "Please analyze and group all currently open tabs appropriately." 
+            : "กรุณาวิเคราะห์และจัดกลุ่มแท็บที่เปิดอยู่ทั้งหมดตามความเหมาะสม";
+          const reqContext = isEn ? "Group Tabs" : "จัดกลุ่มแท็บ";
+          const res = await handleAI(reqText, reqContext, settings || {}, tabId);
           sendResponse(res);
         } catch (err) {
-          sendResponse({ reply: `เกิดข้อผิดพลาด: ${err.message}` });
+          sendResponse({ reply: isEn ? `Error: ${err.message}` : `เกิดข้อผิดพลาด: ${err.message}` });
         }
       });
       return true; // async response
@@ -30,23 +35,27 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const tab = tabs[0];
-      if (!tab) { sendResponse({ reply: "ไม่พบแท็บที่ active" }); return; }
+      if (!tab) { sendResponse({ reply: isEn ? "Active tab not found" : "ไม่พบแท็บที่ active" }); return; }
       chrome.tabs.sendMessage(tab.id, { type: "GET_PAGE_CONTENT", options }, async (pageRes) => {
-        if (chrome.runtime.lastError) { sendResponse({ reply: "ไม่สามารถเข้าถึงเนื้อหาหน้านี้" }); return; }
+        if (chrome.runtime.lastError) { sendResponse({ reply: isEn ? "Cannot access this page's content" : "ไม่สามารถเข้าถึงเนื้อหาหน้านี้" }); return; }
         const pageText = (pageRes && pageRes.text) ? pageRes.text : "";
         const pageContext = `${pageRes.title || tab.title || ''} · ${pageRes.url || tab.url || ''}`;
         let prompt = "";
         if (action === "summarize") {
-          prompt = `สรุปหน้าเว็บต่อไปนี้ โดยย่อเป็นประเด็นสำคัญและหัวข้อสั้นๆ ไม่เกิน 2 บรรทัด:\n\n${pageText}`;
+          prompt = isEn 
+            ? `Summarize the following webpage. Keep it brief as key points within 2 lines:\n\n${pageText}`
+            : `สรุปหน้าเว็บต่อไปนี้ โดยย่อเป็นประเด็นสำคัญและหัวข้อสั้นๆ ไม่เกิน 2 บรรทัด:\n\n${pageText}`;
         } else if (action === "analyze") {
-          prompt = `วิเคราะห์หน้าเว็บนี้: ระบุข้อดี ข้อเสีย และข้อสังเกต พร้อมสรุปเป็นหัวข้อ ไม่เกิน 2 บรรทัด:\n\n${pageText}`;
+          prompt = isEn
+            ? `Analyze this webpage: identify pros, cons, and observations. Summarize in points within 2 lines:\n\n${pageText}`
+            : `วิเคราะห์หน้าเว็บนี้: ระบุข้อดี ข้อเสีย และข้อสังเกต พร้อมสรุปเป็นหัวข้อ ไม่เกิน 2 บรรทัด:\n\n${pageText}`;
         } else {
           prompt = `${action}\n\n${pageText}`;
         }
         try {
           const res = await handleAI(prompt, pageContext, settings || {}, tab.id);
           sendResponse(res);
-        } catch (err) { sendResponse({ reply: `เกิดข้อผิดพลาด: ${err.message}` }); }
+        } catch (err) { sendResponse({ reply: isEn ? `Error: ${err.message}` : `เกิดข้อผิดพลาด: ${err.message}` }); }
       });
     });
     return true; // async response
@@ -182,17 +191,40 @@ async function executeTabAction(parsed) {
 }
 
 async function handleAI(userText, pageContext, settings, activeTabId = null) {
-  const { apiKey, model, provider } = settings;
+  const { apiKey, model, provider, language } = settings;
+  const isEn = language === "en";
 
   if (!apiKey) {
-    return { reply: "ยังไม่ได้ใส่ API key นะ! กดไอคอน extension แล้วไปที่ Settings ได้เลย" };
+    return { reply: isEn ? "API key is missing! Click the extension icon and go to Settings." : "ยังไม่ได้ใส่ API key นะ! กดไอคอน extension แล้วไปที่ Settings ได้เลย" };
   }
 
   const tabsList = await getAllWindowTabs();
   const tabsContext = tabsList.map(t => `ID: ${t.id} - Title: "${t.title}" - URL: ${t.url}${t.id === activeTabId ? " (Active Tab)" : ""}`).join("\n");
 
-  const systemPrompt = `คุณคือสัตว์เลี้ยง AI น่ารักที่อาศัยอยู่ใน browser ของผู้ใช้
-ตอบสั้นๆ กระชับ น่ารักและเป็นมิตร
+  const systemPrompt = isEn ? `You are a cute AI pet living in the user's browser.
+Answer shortly, concisely, cute and friendly in English.
+Current webpage context: ${pageContext || "No context"}
+
+You have the ability to control browser tabs.
+Here is the list of all open tabs in the current window:
+${tabsContext}
+
+CRITICAL RULE: Reply ONLY in JSON format. Do NOT include any conversational text outside the JSON.
+
+Format for general chat/responses:
+{"reply":"Your response in English"}
+
+Format for opening a new tab:
+{"reply":"Notification message for user","action":"open_tab","url":"https://example.com"}
+
+Format for closing tabs:
+{"reply":"Notification message for user","action":"close_tabs","tabIds":[123,456]}
+
+Format for grouping tabs (use the IDs from the tab list above):
+{"reply":"Notification message for user","action":"group_tabs","groups":[{"title":"Group Title","color":"blue","tabIds":[123,456]},{"title":"Group Title 2","color":"red","tabIds":[789]}]}
+
+Available tab group colors: blue, red, yellow, green, pink, purple, cyan, orange, grey` : `คุณคือสัตว์เลี้ยง AI น่ารักที่อาศัยอยู่ใน browser ของผู้ใช้
+ตอบสั้นๆ กระชับ น่ารักและเป็นมิตร เป็นภาษาไทย
 บริบทหน้าเว็บปัจจุบัน: ${pageContext || "ไม่มีข้อมูล"}
 
 คุณมีความสามารถในการควบคุม Tabs ของเบราว์เซอร์
